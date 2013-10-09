@@ -1,0 +1,8 @@
+To run the seam carver, run the ResizeDemo.py script:
+
+[1] run ResizeDemo.py name-of-png-file num-rows-to-remove num-cols-to-remove
+
+for example:
+[1] run ResizeDemo.py "12x10.png" 3 2
+
+The ResizeDemo.py should be modified to run large images. You don't want to print an energy array for large images.
