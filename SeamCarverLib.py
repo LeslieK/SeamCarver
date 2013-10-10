@@ -94,7 +94,7 @@ class SeamCarver(object):
 		"remove vertical seam of pixels from image"
 		if (len(seam) != self._height or self._height == 0 or self._width == 2):
 			raise ValueError
-		indexes_to_remove = map(lambda (r, col): self._width * r + col, enumerate(seam))
+		indexes_to_remove = set(map(lambda (r, col): self._width * r + col, enumerate(seam)))
 		
 		# img array ; each pixel is represented by 3 or 4 unsigned integers
 		R_chan =  map(lambda x: x * self._num_channels, indexes_to_remove)
@@ -109,7 +109,7 @@ class SeamCarver(object):
 		if self._num_channels == 4:
 			alpha_chan = map(lambda x: x + 3, R_chan)
 			pixels_to_remove.extend(alpha_chan)
-
+		pixels_to_remove = set(pixels_to_remove)
 		# remove energy values associated with removed pixels
 		self._energy = map(lambda (x, y): y, filter(lambda (x, y): x not in indexes_to_remove, enumerate(self._energy)))
 
