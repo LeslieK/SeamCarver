@@ -7,21 +7,25 @@ import numpy as np
 class SeamCarver(object):
 	"removes seams from an image"
 	def __init__(self, picture):
-		self._img = picture.image_2d
+		self._img = picture.image_3d
 		self._height = picture.num_rows
 		self._width = picture.num_cols
 		self._num_channels = picture.num_channels
 		self._energy = picture.energyArray
 
-		self._copyIMG = np.empty_like(self._img)
-		self._copyIMG[:] = self._img
+		self.image2render = picture.image_3d.copy().astype(np.uint8)
 
-		self._R = self._img[:, 0::self._num_channels]
-		self._G = self._img[:, 1::self._num_channels]
-		self._B = self._img[:, 2::self._num_channels]
+		#self._copyIMG = picture.image_3d.copy()
+		#self._copyIMG = np.empty_like(self._energy)
+		#self._copyIMG[:] = self._energy
 
-		self._copyENERGY = np.empty_like(self._energy)
-		self._copyENERGY[:] = self._energy
+		self._R = self._img[:, :, 0]
+		self._G = self._img[:, :, 1]
+		self._B = self._img[:, :, 2]
+
+		self._copyENERGY = self._energy.copy()
+		# self._copyENERGY = np.empty_like(self._energy)
+		# self._copyENERGY[:] = self._energy
 		
 		# virtual source and sink vertices
 		self._num_pixels = self._height * self._width
@@ -122,6 +126,7 @@ class SeamCarver(object):
 		self._G = self._G.transpose()
 		self._B = self._B.transpose()
 		self._energy = self._energy.transpose()
+		self._img = self._img.transpose()
 
 		self.removeVerticalSeam(seam)
 
@@ -129,6 +134,7 @@ class SeamCarver(object):
 		self._G = self._G.transpose()
 		self._B = self._B.transpose()
 		self._energy = self._energy.transpose()
+		self._img = self._img.transpose()
 		self._exchDims()
 					
 

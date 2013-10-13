@@ -33,10 +33,14 @@ height = sc.height()
 vertical_seams = []
 horizontal_seams = []
 
-# show greyscale energy
+print 'show original image: {} x {}'.format(sc.width(), sc.height())
+plt.imshow(sc.image2render)
+plt.show()
+
+print 'show greyscale energy'
 energyIMG = SCVisualizerUtils.toGreyscale(sc)
 plt.savefig("energyArrayGreyscale.png")
-plt.imshow(e, cmap=plt.cm.Greys_r)
+plt.imshow(energyIMG, cmap=plt.cm.Greys_r)
 plt.show()
 
 print "start finding vertical seam"
@@ -68,9 +72,18 @@ while num_rows > 0:
 	horizontal_seams.append(s)  	# [ [h_seam], [h_seam], ...]
 	num_rows -= 1
 
+print "show resized image"
+# make image from R, G, B
+resized_img = np.array(range(sc.width()*sc.height()*sc._num_channels), dtype=np.int16).reshape(sc.height(), sc.width(), sc._num_channels)
+resized_img[:, :, 0] = sc._R[:, :]
+resized_img[:, :, 1] = sc._G[:, :]
+resized_img[:, :, 2] = sc._B[:, :]
+plt.imshow(resized_img.astype(np.uint8))
+plt.savefig("TESTresizedimg.png")
+plt.show()
 
-print 'write reduced color img (no overlay), {}x{}'.format(sc.width(), sc.height())
-# SCVisualizerUtils.writeIMG(sc._img, sc.width(), sc.height(), "TEST_color_nooverlay.png", greyscale=False)
+#print 'write reduced color img (no overlay), {}x{}'.format(sc.width(), sc.height())
+#SCVisualizerUtils.writeIMG(sc._img, sc.width(), sc.height(), "TEST_color_nooverlay.png", greyscale=False)
 # # convert png image to numpy array; in ipython notebook, display image with imshow(<np_array>)
 # npREDIMG = mpimg.imread("TEST_color_nooverlay.png")
 

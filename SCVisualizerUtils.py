@@ -70,15 +70,7 @@ def toGreyscale(sc):
 	"return greyscale img of energy array"
 	maxv = np.max(sc._energy)
 	return np.round(sc._energy/ float(maxv) * 255)
-	# in notebook: 
-	# imshow(e, cmap=pyplot.cm.binary)
-
-#e = SCVisualizerUtils.toGreyscale(sc)
-#plt.savefig("energyArrayGreyscale.png")
-#plt.imshow(e, cmap=pyplot.cm.Greys_r)
-#plt.show()
-
-
+	
 
 def writeGrayscaleToPNG(sc, filename_out, seam=None, horizontal=True):
 	"converts sc.energy array to png image of grayscale values"
@@ -103,28 +95,28 @@ def writeGrayscaleToPNG(sc, filename_out, seam=None, horizontal=True):
 		w.write_array(f, normal_energy)
 
 
-def overlayEnergyIMG(img, width, v_list_of_seams, h_list_of_seams):
-	"img is a numpy array"
+def overlayEnergyIMG(img, v_list_of_seams, h_list_of_seams):
+	"img is numpy energy array"
 	# overlay vertical seams
+	i = 0
 	for seam in v_list_of_seams:
 		# replace img pixels with seam
+		seam = seam + i 		# for each successive seam, increment seam[row] (i.e, the col) by 1
 		img[range(len(seam)), seam] = 255
-		col += 1
-		# plot seam on canvas
-		# show canvas
+		i += 1
 
-	# overlay horizontal seams	 						
+	# overlay horizontal seams
+	i = 0	 						
 	for seam in h_list_of_seams:
+		seam = seam + i 		# for each successive seam, increment seam[col] (i.e, the row) by 1
 		img[seam, range(len(seam))] = 255
-		row += 1
-		# draw seam on canvas
-		# show canvas
+		i += 1
 
 def overlayIMG(sc, v_list_of_seams, h_list_of_seams):
 	"overlay pixel img with seams"
-	R = sc._copyIMG[:, 0::sc._num_channels]
-	G = sc._copyIMG[:, 1::sc._num_channels]
-	B = sc._copyIMG[:, 2::sc._num_channels]
+	R = sc.image2render[:, :, 0]
+	G = sc.image2render[:, :, 1]
+	B = sc.image2render[:, :, 2]
 	# overlay vertical seams
 	for seam in v_list_of_seams:
 		for row, col in enumerate(seam):
@@ -132,7 +124,7 @@ def overlayIMG(sc, v_list_of_seams, h_list_of_seams):
 			G[row][col] = 0
 			B[row][col] = 0
 		col += 1
-		plt.imshow(sc._copyIMG)
+		plt.imshow(sc.image2render)
 		plt.show()
 		
 	# overlay horizontal seams	 						
@@ -142,33 +134,33 @@ def overlayIMG(sc, v_list_of_seams, h_list_of_seams):
 			G[row][col] = 0
 			B[row][col] = 0
 		row += 1
-		plt.imshow(sc._copyIMG)
+		plt.imshow(sc.image2render)
 		plt.show()
 
-# def overlayIMG(img, width, v_list_of_seams, h_list_of_seams):
+# def overlayIMG(sc, v_list_of_seams, h_list_of_seams):
 # 	"overlay pixel img with seams"
+# 	R = sc.image2render[:, :, 0]
+# 	G = sc.image2render[:, :, 1]
+# 	B = sc.image2render[:, :, 2]
 # 	# overlay vertical seams
+# 	col = 0
 # 	for seam in v_list_of_seams:
-# 		for row, col in enumerate(seam):
-# 			index = row * width + col
-# 			# replace img pixels with seam 
-# 			img[index*3] = 255
-# 			img[index*3+1] = 0
-# 			img[index*3+2] = 0
-# 		col += 1	
-
-# 	# overlay horizontal seams	 						
+# 		R[range(len(seam)), seam + col] = 255
+# 		G[range(len(seam)), seam + col] = 0
+# 		B[range(len(seam)), seam + col] = 0
+# 		col += 1
+# 		plt.imshow(sc.image2render)
+# 		plt.show()
+		
+# 	# overlay horizontal seams	 
+# 	row = 0						
 # 	for seam in h_list_of_seams:
-# 		for col, row in enumerate(seam):
-# 			index = row * width + col
-# 			# replace img pixels with seam 
-# 			#print"row: {}  col: {}  index: {}".format(row, col, index)
-# 			img[index*3] = 255
-# 			img[index*3+1] = 0
-# 			img[index*3+2] = 0
+# 		R[seam + row, range(len(seam))] = 255
+# 		G[seam + row, range(len(seam))] = 0
+# 		B[seam + row, range(len(seam))] = 0
 # 		row += 1
-# 		# draw seam on canvas
-# 		# show canvas
+# 		plt.imshow(sc.image2render)
+# 		plt.show()
 
 def writeIMG(img, width, height, filename, greyscale=False):
 	"write img to a PNG file"
@@ -176,14 +168,6 @@ def writeIMG(img, width, height, filename, greyscale=False):
 	with open(filename, 'wb') as f:
 		print 'writing file...'
 		w.write_array(f, img)
-
-
-def toDictionary(seam):
-	"converts a seam to a dictionary; k = seam value, v = index in seam"
-	d = collections.defaultdict(list)
-	for i in range(len(seam)):
-		d[seam[i]].append(i)
-	return d
 
 
 

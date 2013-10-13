@@ -7,30 +7,30 @@ class Picture(object):
 	#BORDER_ENERGY = 195075
 	BORDER_ENERGY = 195705
 	
-	
 	def __init__(self, pngfilename):
 		"reads in a .png image"
 		_CH = 3		# number of channels (R,G,B = 3; R,G,B,A = 4)
-		_r = png.Reader(filename=pngfilename)
-		res = _r.asDirect()
+		_reader = png.Reader(filename=pngfilename)
+		self.num_cols, self.num_rows, it, meta_dict = _reader.asDirect()
 	# 	res = (width, height, iterator-over-pixels, 
 	# 	    	{'alpha': False, 'bitdepth': 8, greyscale': True,
 	#        	'interlace': 0, 'planes': 1, size':(255, 1)})
-
-		self.num_cols = res[0]
-		self.num_rows = res[1]
-
-		if res[3]['alpha']:
+		if meta_dict['alpha']:
 			_CH = 4
 
 		self.num_channels = _CH
+		# for RGB with no Alpaha
+		#assert plane_count == 3
 
 		# 2-d numpy array
 		# boxed row, flat pixel; _CH = 3   [ [R,G,B, R,G,B, ..., R,G,B], ..., ]
 		# boxed row, flat pixel; _CH = 4   [ [R,G,B,A, R,G,B,A, ..., R,G,B,A], ..., ]
-		self.image_2d = np.vstack(itertools.imap(np.int16, res[2]))
+		# This dtype (int16) must be used for energy calculations.
+		self.image_2d = np.vstack(itertools.imap(np.int16, it))
+		# a different view of the same data
+		self.image_3d = np.reshape(self.image_2d, (self.num_rows, self.num_cols, meta_dict['planes']))
 
-		# 2-d numpy array, dtype = float
+		# 2-d numpy array
 		self.energyArray = np.ndarray((self.num_rows, self.num_cols), dtype=np.long)
 
 		# scratch energy array: scratchpad to do math operations (square, diff) to build energy array
@@ -77,5 +77,8 @@ class Picture(object):
 			_row_prev = _row_curr
 			_row_curr = _row_next
 			_curr += 1
+		del _reader, _scratch
+
+
 
 
