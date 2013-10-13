@@ -1,4 +1,5 @@
-import png, array
+import png, itertools
+import numpy as np
 
 
 class Picture(object):
@@ -11,7 +12,7 @@ class Picture(object):
 		"reads in a .png image"
 		_CH = 3		# number of channels (R,G,B = 3; R,G,B,A = 4)
 		_r = png.Reader(filename=pngfilename)
-		res = _r.read()
+		res = _r.asDirect()
 	# 	res = (width, height, iterator-over-pixels, 
 	# 	    	{'alpha': False, 'bitdepth': 8, greyscale': True,
 	#        	'interlace': 0, 'planes': 1, size':(255, 1)})
@@ -24,62 +25,57 @@ class Picture(object):
 
 		self.num_channels = _CH
 
-		self.energyArray = array.array("L")
-		self.imageArray = array.array("B")
+		# 2-d numpy array
+		# boxed row, flat pixel; _CH = 3   [ [R,G,B, R,G,B, ..., R,G,B], ..., ]
+		# boxed row, flat pixel; _CH = 4   [ [R,G,B,A, R,G,B,A, ..., R,G,B,A], ..., ]
+		self.image_2d = np.vstack(itertools.imap(np.int16, res[2]))
+
+		# 2-d numpy array, dtype = float
+		self.energyArray = np.ndarray((self.num_rows, self.num_cols), dtype=np.long)
+
+		# scratch energy array: scratchpad to do math operations (square, diff) to build energy array
+		# width of _scratch does not include left/right boundary pixels
+		_scratch = np.ndarray((2, (self.num_cols - 2) * _CH), dtype=np.int32)
+
+		# set top and bot rows
+		self.energyArray[[0, self.num_rows - 1], :] = Picture.BORDER_ENERGY
+		self.energyArray[:, [0, self.num_cols - 1]] = Picture.BORDER_ENERGY
 		
 		# row 0 of image
-		_row_prev = res[2].next()
-		self.energyArray.extend([Picture.BORDER_ENERGY] * self.num_cols)
-		self.imageArray.extend(_row_prev)
-
+		_row_prev = self.image_2d[0]
 		if (self.num_rows == 1):
 			return
 
 		# row 1 of image
-		_row_curr = res[2].next()
-		self.imageArray.extend(_row_curr)
+		_row_curr = self.image_2d[1]
 		if (self.num_rows == 2):
-			self.energyArray.extend([Picture.BORDER_ENERGY] * self.num_cols)
 			return
 		
 		# for images with more than 2 rows
-		for _row_next in res[2]:
-			"build image array and energy array"
-
-			# add _row_next to image array
-			self.imageArray.extend(_row_next)
-
+		_curr = 1
+		for _row_next in self.image_2d[2:]:
+			"populate energy array"
 			# calculate gradient of current row
-			_gradRv = map(self._diff_squared, _row_prev[0::_CH], _row_next[0::_CH])
-			_gradGv = map(self._diff_squared, _row_prev[1::_CH], _row_next[1::_CH])
-			_gradBv = map(self._diff_squared, _row_prev[2::_CH], _row_next[2::_CH])
-			n = self.num_cols * _CH
-			_gradRh = map(self._diff_squared, _row_curr[0:(n - 2*_CH):_CH], _row_curr[2*_CH:(n - _CH)+1:_CH])
-			_gradGh = map(self._diff_squared, _row_curr[1:(n - 2*_CH):_CH], _row_curr[2*_CH+1:(n - _CH)+2:_CH])
-			_gradBh = map(self._diff_squared, _row_curr[2:(n - 2*_CH):_CH], _row_curr[2*_CH+2:(n - _CH)+3:_CH])
+			# store vertical diff in _scratch[0]
+			_scratch[0] = (_row_prev - _row_next)[_CH:-_CH]	# drop border cols
+			_scratch[0] = _scratch[0] ** 2
+			
+			# calculate horizontal diff in _scratch[1]
+			_scratch[1] = _row_curr[2*_CH:] - _row_curr[:-2 * _CH] 
+			_scratch[1] = _scratch[1] ** 2
 
-			_gradR = map(int.__add__, _gradRv[1:-1], _gradRh)
-			_gradG = map(int.__add__, _gradGv[1:-1], _gradGh)
-			_gradB = map(int.__add__, _gradBv[1:-1], _gradBh)
+			# add vertical and horizontal gradients
+			_scratch[0] = _scratch[0] + _scratch[1]
 
-			# calculate energy of current row
-			_energy = map(sum, zip(_gradR, _gradG, _gradB))
-
-			# left border pixel energy 
-			self.energyArray.append(Picture.BORDER_ENERGY)
-			# non-border pixel energy
-			self.energyArray.extend(_energy)
-			# right border pixel energy
-			self.energyArray.append(Picture.BORDER_ENERGY)
-
+			# BOR  RGB RGB BOR  _scratch[0]:  vert: deltaR^2, deltaG62, deltaB^2, ...
+			#  0    1   2   3   
+			# RBG  RGB RGB RGB  _scratch[1]   horiz: deltaR^2, deltaG62, deltaB^2, ...
+			ecol = 1
+			for j in range(0, len(_scratch[0]/_CH), _CH):
+				self.energyArray[_curr][ecol] = sum(_scratch[0, [j, j+1, j+2]])
+				ecol += 1
 			_row_prev = _row_curr
 			_row_curr = _row_next
+			_curr += 1
 
-		# bottom row of energy array
-		print 'i am in Picture'
-		self.energyArray.extend([Picture.BORDER_ENERGY] * self.num_cols)
-
-
-	def _diff_squared(self, x, y):
-		return (x-y)**2
 
