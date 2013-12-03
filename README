@@ -1,3 +1,5 @@
+A visualization of the seam carver is here: https://gist.github.com/LeslieK/7773584 
+
 To run the seam carver, run the SCVisualizer.py script:
 
 $ python SCVisualizer.py name-of-png-file num-rows-to-remove num-cols-to-remove
