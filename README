@@ -1,13 +1,12 @@
 To run the seam carver, run the SCVisualizer.py script:
 
-[1] run SCVisualizer.py name-of-png-file num-rows-to-remove num-cols-to-remove
+$ python SCVisualizer.py name-of-png-file num-rows-to-remove num-cols-to-remove
 
 for example:
-[1] run SCVisualizer.py "12x10.png" 3 2
+$ python SCVisualizer.py "HJocean.png" 50 20
+$ python SCVisualizer.py "12x10.png" 3 2
+
 
 dependencies: readPNG_2.py, SeamCarverLib.py, SCVisualizerUtils.py
 
-You can open the notebook file and see the image being carved up: one seam at a time!
 
-notebook: SeamCarver_HJocean_200.ipynb
-python: SeamCarver_HJocean_200.py
